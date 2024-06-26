@@ -268,6 +268,7 @@ public class HiveCommonSessionProperties
 
     public static DataSize getParquetMaxReadBlockSize(ConnectorSession session)
     {
+        // 拿到 默认读的 BlockSize
         return session.getProperty(PARQUET_MAX_READ_BLOCK_SIZE, DataSize.class);
     }
 

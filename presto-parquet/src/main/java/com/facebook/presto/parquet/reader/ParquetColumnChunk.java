@@ -122,6 +122,7 @@ public class ParquetColumnChunk
         Optional<BlockCipher.Decryptor> dataDecryptor = getDataDecryptor(columnDecryptionSetup);
 
         long totalValueCount = descriptor.getColumnChunkMetaData().getValueCount();
+        // 创建 Parquet 的 PageReader
         return new PageReader(descriptor.getColumnChunkMetaData().getCodec(), dataPageIterator, totalValueCount,
                 dictionaryPage, offsetIndex, dataDecryptor, fileAdditionalAuthenticationData, rowGroupOrdinal, columnOrdinal);
     }
@@ -223,6 +224,7 @@ public class ParquetColumnChunk
         return Optional.of(columnDecryptionSetup.getDataDecryptor());
     }
 
+    // 消费 read buffer.
     private Slice getSlice(int size)
             throws IOException
     {
@@ -305,6 +307,7 @@ public class ParquetColumnChunk
         return encodings.contains(Encoding.PLAIN_DICTIONARY) || encodings.contains(Encoding.RLE_DICTIONARY);
     }
 
+    /// 具体的读, 包装了一个 bufferReader
     static class ColumnChunkBufferedInputStream
             extends BufferedInputStream
     {

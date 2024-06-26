@@ -27,6 +27,7 @@ import java.util.concurrent.ExecutionException;
 import static com.google.common.base.Throwables.throwIfInstanceOf;
 import static java.util.Objects.requireNonNull;
 
+/// cache 相关的实现
 public class CachingParquetMetadataSource
         implements ParquetMetadataSource
 {

@@ -190,8 +190,12 @@ public class ParquetPageSourceFactory
         ParquetDataSource dataSource = null;
         Path path = new Path(fileSplit.getPath());
         try {
+            // 拿到 InputStream, 直接是 hdfsInputStream
+            // TODO(mwish): 研究一下这玩意是怎么处理的
             FSDataInputStream inputStream = hdfsEnvironment.getFileSystem(user, path, configuration).openFile(path, hiveFileContext);
             // Lambda expression below requires final variable, so we define a new variable parquetDataSource.
+            //
+            // TODO(mwish): 这里会不会有 Cache 相关的代码.
             final ParquetDataSource parquetDataSource = buildHdfsParquetDataSource(inputStream, path, stats);
             dataSource = parquetDataSource;
             Optional<InternalFileDecryptor> fileDecryptor = createDecryptor(configuration, path);
@@ -203,9 +207,11 @@ public class ParquetPageSourceFactory
                     fileDecryptor,
                     readMaskedValue).getParquetMetadata());
 
+            //
             FileMetaData fileMetaData = parquetMetadata.getFileMetaData();
             MessageType fileSchema = fileMetaData.getSchema();
 
+            // 过滤出要读的 Column.
             Optional<MessageType> message = columns.stream()
                     .filter(column -> column.getColumnType() == REGULAR || isPushedDownSubfield(column))
                     .map(column -> getColumnType(typeManager.getType(column.getTypeSignature()), fileSchema, useParquetColumnNames, column, tableName, path))
@@ -218,6 +224,7 @@ public class ParquetPageSourceFactory
 
             ImmutableList.Builder<BlockMetaData> footerBlocks = ImmutableList.builder();
 
+            // RowGroups 拿到 Index.
             for (BlockMetaData block : parquetMetadata.getBlocks()) {
                 Optional<Integer> firstIndex = findFirstNonHiddenColumnId(block);
                 if (firstIndex.isPresent()) {
@@ -228,6 +235,7 @@ public class ParquetPageSourceFactory
                 }
             }
             Map<List<String>, RichColumnDescriptor> descriptorsByPath = getDescriptors(fileSchema, requestedSchema);
+            // Domain 做 Ppd 裁剪?
             TupleDomain<ColumnDescriptor> parquetTupleDomain = getParquetTupleDomain(descriptorsByPath, effectivePredicate);
             Predicate parquetPredicate = buildPredicate(requestedSchema, parquetTupleDomain, descriptorsByPath);
             final ParquetDataSource finalDataSource = dataSource;
@@ -235,9 +243,11 @@ public class ParquetPageSourceFactory
             List<ColumnIndexStore> blockIndexStores = new ArrayList<>();
 
             long nextStart = 0;
+            // 每个 RowGroup 的行数被塞进 BlockStarts
             ImmutableList.Builder<Long> blockStarts = ImmutableList.builder();
             for (BlockMetaData block : footerBlocks.build()) {
                 Optional<ColumnIndexStore> columnIndexStore = ColumnIndexFilterUtils.getColumnIndexStore(parquetPredicate, finalDataSource, block, descriptorsByPath, columnIndexFilterEnabled);
+                // 过 RowGroup 级别的 PPD
                 if (predicateMatches(parquetPredicate, block, finalDataSource, descriptorsByPath, parquetTupleDomain, columnIndexStore, columnIndexFilterEnabled, Optional.of(session.getWarningCollector()))) {
                     blocks.add(block);
                     blockStarts.add(nextStart);
@@ -273,6 +283,7 @@ public class ParquetPageSourceFactory
             ImmutableList.Builder<Optional<Field>> fieldsBuilder = ImmutableList.builder();
             ImmutableList.Builder<Boolean> rowIndexColumns = ImmutableList.builder();
             for (HiveColumnHandle column : columns) {
+                // RowIndex 的隐藏列?
                 checkArgument(column == PARQUET_ROW_INDEX_COLUMN || column.getColumnType() == REGULAR || column.getColumnType() == SYNTHESIZED, "column type must be REGULAR: %s", column);
 
                 String name = column.getName();
@@ -292,6 +303,7 @@ public class ParquetPageSourceFactory
                         List<String> nestedColumnPath = nestedColumnPath(pushedDownSubfield);
                         Optional<ColumnIO> columnIO = findNestedColumnIO(lookupColumnByName(messageColumnIO, pushedDownSubfield.getRootName()), nestedColumnPath);
                         if (columnIO.isPresent()) {
+                            // 添加 FieldReader
                             fieldsBuilder.add(constructField(type, columnIO.get()));
                         }
                         else {
@@ -307,6 +319,7 @@ public class ParquetPageSourceFactory
                     fieldsBuilder.add(Optional.empty());
                 }
             }
+            // 返回 PageSource
             return new ParquetPageSource(parquetReader, typesBuilder.build(), fieldsBuilder.build(), rowIndexColumns.build(), namesBuilder.build(), hiveFileContext.getStats());
         }
         catch (Exception e) {

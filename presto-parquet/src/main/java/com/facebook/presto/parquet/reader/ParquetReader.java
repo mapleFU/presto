@@ -331,10 +331,12 @@ public class ParquetReader
         if (!columnReader.isInitialized()) {
             validateParquet(currentBlockMetadata.getRowCount() > 0, "Row group has 0 rows");
             ColumnChunkMetaData columnChunkMetaData = getColumnChunkMetaData(columnDescriptor);
+            // 直接读完整个 RG?
             long startingPosition = columnChunkMetaData.getStartingPos();
             int columnChunkSize = toIntExact(columnChunkMetaData.getTotalSize());
 
             if (shouldUseColumnIndex(columnChunkMetaData.getPath())) {
+                // 可以用上 ColumnIndex
                 OffsetIndex offsetIndex = blockIndexStores.get(currentBlock).getOffsetIndex(columnChunkMetaData.getPath());
                 OffsetIndex filteredOffsetIndex = ColumnIndexFilterUtils.filterOffsetIndex(offsetIndex, currentGroupRowRanges, blocks.get(currentBlock).getRowCount());
                 List<OffsetRange> offsetRanges = ColumnIndexFilterUtils.calculateOffsetRanges(filteredOffsetIndex, columnChunkMetaData, offsetIndex.getOffset(0), startingPosition);
@@ -363,6 +365,7 @@ public class ParquetReader
                 }
             }
             else {
+                // 创建 PageReader
                 PageReader pageReader = createPageReader(
                         dataSourceAsInputStream(startingPosition, columnChunkSize),
                         columnChunkSize,
@@ -409,6 +412,7 @@ public class ParquetReader
     private InputStream dataSourceAsInputStream(long startingPosition, List<OffsetRange> offsetRanges)
     {
         List<InputStream> inputStreams = new ArrayList<>();
+        // 拆分成 DataPage InputStream
         for (OffsetRange r : offsetRanges) {
             InputStream inputStream = dataSourceAsInputStream(startingPosition + r.getOffset(), r.getLength());
             inputStreams.add(inputStream);
@@ -417,6 +421,7 @@ public class ParquetReader
         return new SequenceInputStream(Collections.enumeration(inputStreams));
     }
 
+    // 包装内部的 DataSource, 包装一轮 totalSize
     private InputStream dataSourceAsInputStream(long startingPosition, long totalSize)
     {
         InputStream dataSourceAsStream = new InputStream()
@@ -479,6 +484,7 @@ public class ParquetReader
         ColumnChunkDescriptor descriptor = new ColumnChunkDescriptor(columnDescriptor, columnChunkMetaData, columnChunkSize);
 
         //We use the value of the maxReadBlockBytes to set the max size of the data source buffer
+        // 这里传进去的是一个 Buffer Reader.
         ParquetColumnChunk columnChunk = new ParquetColumnChunk(
                 descriptor,
                 new ParquetColumnChunk.ColumnChunkBufferedInputStream(requireNonNull(inputStream), min(columnChunkSize, (int) maxReadBlockBytes)),
@@ -652,6 +658,7 @@ public class ParquetReader
         return rowRanges;
     }
 
+    /// 合并成连续的 Range
     private List<OffsetRange> concatRanges(List<OffsetRange> offsetRanges)
     {
         List<OffsetRange> pageRanges = new ArrayList<>();

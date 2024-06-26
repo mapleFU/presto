@@ -37,6 +37,7 @@ import static com.google.common.base.Strings.nullToEmpty;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 
+/// smjb
 public class HdfsParquetDataSource
         extends AbstractParquetDataSource
 {

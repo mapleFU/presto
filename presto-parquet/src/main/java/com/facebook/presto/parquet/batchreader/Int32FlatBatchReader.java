@@ -225,6 +225,7 @@ public class Int32FlatBatchReader
         return new ColumnChunk(block, new int[0], new int[0]);
     }
 
+    /// Page Level Skipping
     private void seek()
             throws IOException
     {

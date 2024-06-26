@@ -91,6 +91,7 @@ public final class MetadataReader
     private static final Slice MAGIC = wrappedBuffer(MAGIC_STR.getBytes(US_ASCII));
     private static final Slice EMAGIC = wrappedBuffer(EF_MAGIC_STR.getBytes(US_ASCII));
     private static final int POST_SCRIPT_SIZE = Integer.BYTES + MAGIC.length();
+    // 读 16K 的 Footer.
     private static final int EXPECTED_FOOTER_SIZE = 16 * 1024;
     private static final ParquetMetadataConverter PARQUET_METADATA_CONVERTER = new ParquetMetadataConverter();
     private static final long MODIFICATION_TIME_NOT_SET = 0L;

@@ -47,6 +47,7 @@ public class ColumnIOConverter
     {
     }
 
+    // 可能是 Lazy 的 Column Reader
     public static Optional<Field> constructField(Type type, ColumnIO columnIO)
     {
         if (columnIO == null) {
@@ -93,6 +94,7 @@ public class ColumnIOConverter
             Optional<Field> field = constructField(types.get(0), getArrayElementColumn(groupColumnIO.getChild(0)));
             return Optional.of(new GroupField(type, repetitionLevel, definitionLevel, required, ImmutableList.of(field)));
         }
+        // Leaf (Primitive) Reader
         PrimitiveColumnIO primitiveColumnIO = (PrimitiveColumnIO) columnIO;
         RichColumnDescriptor column = new RichColumnDescriptor(primitiveColumnIO.getColumnDescriptor(), columnIO.getType().asPrimitiveType());
         return Optional.of(new PrimitiveField(type, repetitionLevel, definitionLevel, required, column, primitiveColumnIO.getId()));

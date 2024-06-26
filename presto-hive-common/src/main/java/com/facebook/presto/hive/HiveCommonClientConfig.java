@@ -41,6 +41,7 @@ public class HiveCommonClientConfig
     private DataSize orcTinyStripeThreshold = new DataSize(8, MEGABYTE);
     private boolean parquetBatchReadOptimizationEnabled;
     private boolean parquetEnableBatchReaderVerification;
+    // 默认读 16M
     private DataSize parquetMaxReadBlockSize = new DataSize(16, MEGABYTE);
     private boolean rangeFiltersOnSubscriptsEnabled;
     private boolean readNullMaskedParquetEncryptedValueEnabled;

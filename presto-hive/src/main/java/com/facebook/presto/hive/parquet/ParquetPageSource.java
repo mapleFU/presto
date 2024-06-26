@@ -41,6 +41,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.nCopies;
 import static java.util.Objects.requireNonNull;
 
+/// 把 Parquet 构建成 Presto Page 的 Source
 public class ParquetPageSource
         implements ConnectorPageSource
 {
@@ -139,6 +140,7 @@ public class ParquetPageSource
     {
         try {
             batchId++;
+            // 读取 NextBatch.
             int batchSize = parquetReader.nextBatch();
 
             if (closed || batchSize <= 0) {
@@ -156,9 +158,11 @@ public class ParquetPageSource
                 else {
                     Optional<Field> field = fields.get(fieldId);
                     if (field.isPresent()) {
+                        // 去构建一个 LazyBlock
                         blocks[fieldId] = new LazyBlock(batchSize, new ParquetBlockLoader(field.get()));
                     }
                     else {
+                        // 我擦, RLE
                         blocks[fieldId] = RunLengthEncodedBlock.create(types.get(fieldId), null, batchSize);
                     }
                 }
@@ -205,6 +209,7 @@ public class ParquetPageSource
         }
     }
 
+    // Lazy Load Parquet
     private final class ParquetBlockLoader
             implements LazyBlockLoader<LazyBlock>
     {
@@ -227,6 +232,7 @@ public class ParquetPageSource
             checkState(batchId == expectedBatchId);
 
             try {
+                // 具体调用 readBlock
                 Block block = parquetReader.readBlock(field);
                 lazyBlock.setBlock(block);
             }
