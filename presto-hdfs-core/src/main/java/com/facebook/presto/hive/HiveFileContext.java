@@ -22,6 +22,7 @@ import java.util.OptionalLong;
 import static com.facebook.presto.hive.CacheQuota.NO_CACHE_CONSTRAINTS;
 import static java.util.Objects.requireNonNull;
 
+/// (Hive?) 文件相关的信息
 public class HiveFileContext
 {
     public static final HiveFileContext DEFAULT_HIVE_FILE_CONTEXT = new HiveFileContext(

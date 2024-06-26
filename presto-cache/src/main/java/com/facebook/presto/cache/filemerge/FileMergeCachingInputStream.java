@@ -25,6 +25,7 @@ import static com.google.common.base.Verify.verify;
 import static io.airlift.slice.Slices.wrappedBuffer;
 import static java.util.Objects.requireNonNull;
 
+/// 给文件级别读做 Merging
 public final class FileMergeCachingInputStream
         extends FSDataInputStream
 {

@@ -415,6 +415,7 @@ public class PrestoS3FileSystem
     @Override
     public FSDataInputStream open(Path path, int bufferSize)
     {
+        // S3 也套了一层 Buffer? 翻了一下, 这个 Buffer 只对顺序消费有意义啊...
         return new FSDataInputStream(
                 new BufferedFSInputStream(
                         new PrestoS3InputStream(s3, getBucketName(uri), path, maxAttempts, maxBackoffTime, maxRetryTime),

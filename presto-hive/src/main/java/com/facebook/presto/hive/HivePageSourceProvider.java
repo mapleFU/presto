@@ -162,6 +162,7 @@ public class HivePageSourceProvider
 
         Optional<EncryptionInformation> encryptionInformation = hiveSplit.getEncryptionInformation();
         CacheQuota cacheQuota = generateCacheQuota(hiveSplit);
+        // 根据 Split Cacheable 创建 FileContext.
         HiveFileContext fileContext = new HiveFileContext(
                 splitContext.isCacheable(),
                 cacheQuota,
@@ -310,6 +311,7 @@ public class HivePageSourceProvider
         }
     }
 
+    // 老熟人写的代码了...
     private static Optional<ConnectorPageSource> createSelectivePageSource(
             Set<HiveSelectivePageSourceFactory> selectivePageSourceFactories,
             Configuration configuration,

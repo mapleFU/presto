@@ -259,6 +259,7 @@ public class TableScanOperator
         if (split == null) {
             return null;
         }
+        // 创建 PageSource
         if (source == null) {
             source = pageSourceProvider.createPageSource(operatorContext.getSession(), split, table, columns, operatorContext.getRuntimeStats());
         }
